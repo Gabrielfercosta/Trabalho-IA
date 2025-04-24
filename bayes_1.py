@@ -4,15 +4,16 @@ import fitz
 from groq import Groq
 import os
 
-# Caminho dinâmico da imagem
+# Caminho dinâmico da imagem e do PDF padrão
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(CURRENT_DIR, "logo.png")
+DEFAULT_PDF_PATH = os.path.join(CURRENT_DIR, "base_de_dados.pdf")
 
 # Configurar chave da Groq
 GROQ_API_KEY = "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"
 client = Groq(api_key=GROQ_API_KEY)
 
-# Função para extrair texto dos PDFs
+# Função para extrair texto de PDFs
 def extract_files(uploader):
     text = ""
     for pdf in uploader:
@@ -21,7 +22,18 @@ def extract_files(uploader):
                 text += page.get_text("text")
     return text
 
-# Motor de inferência para o sistema inteligente
+# Função para carregar o PDF padrão
+def load_default_pdf():
+    if os.path.exists(DEFAULT_PDF_PATH):
+        with open(DEFAULT_PDF_PATH, "rb") as f:
+            text = ""
+            with fitz.open(stream=f.read(), filetype="pdf") as doc:
+                for page in doc:
+                    text += page.get_text("text")
+            return text
+    return None
+
+# Motor de inferência (Groq)
 def chat_with_groq(prompt, context):
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
@@ -32,7 +44,7 @@ def chat_with_groq(prompt, context):
     )
     return response.choices[0].message.content
 
-# Criar a interface
+# Interface principal
 def main():
     st.title("Assistente Inteligente de Biblioteca")
     col1, col2 = st.columns([1, 3])
@@ -41,18 +53,38 @@ def main():
     with col2:
         st.title("Sistema Inteligente de Biblioteca")
 
-    # Sidebar para upload de arquivos e preferências do usuário
+    # Sidebar: Upload e gerenciamento de arquivos
     with st.sidebar:
-        st.header("Uploader de Arquivos")
+        st.header("Gerenciamento de Arquivos")
+        
+        # Upload manual
         uploader = st.file_uploader("Adicione arquivos PDF", type="pdf", accept_multiple_files=True)
+        
+        # Botão para carregar o PDF padrão
+        if st.button("Carregar base de dados padrão"):
+            default_text = load_default_pdf()
+            if default_text:
+                st.session_state["document-text"] = default_text
+                st.success("Base de dados carregada!")
+            else:
+                st.error("Arquivo 'base_de_dados.pdf' não encontrado na pasta.")
+
         st.header("Preferências do Usuário")
         user_preferences = st.text_input("Digite suas preferências de leitura (ex.: gênero, autor)")
 
-    # Processar arquivos e preferências
+    # Pré-carrega o PDF padrão ao iniciar (se existir)
+    if "document-text" not in st.session_state:
+        default_text = load_default_pdf()
+        if default_text:
+            st.session_state["document-text"] = default_text
+
+    # Processa uploads manuais (sobrescreve o padrão se existir)
     if uploader:
         text = extract_files(uploader)
         st.session_state["document-text"] = text
+        st.sidebar.success(f"{len(uploader)} arquivo(s) carregado(s)!")
 
+    # Interação com o assistente
     if "document-text" in st.session_state:
         user_input = st.text_input("Digite sua pergunta:")
         if user_input:
