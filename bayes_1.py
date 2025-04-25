@@ -22,7 +22,7 @@ def extract_files(uploader):
                 text += page.get_text("text")
     return text
 
-# Função para carregar o PDF padrão
+
 def load_default_pdf():
     if os.path.exists(DEFAULT_PDF_PATH):
         with open(DEFAULT_PDF_PATH, "rb") as f:
@@ -33,7 +33,7 @@ def load_default_pdf():
             return text
     return None
 
-# Motor de inferência (Groq)
+
 def chat_with_groq(prompt, context):
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
@@ -44,7 +44,7 @@ def chat_with_groq(prompt, context):
     )
     return response.choices[0].message.content
 
-# Interface principal
+
 def main():
     st.title("Assistente Inteligente de Biblioteca")
     col1, col2 = st.columns([1, 3])
@@ -53,14 +53,14 @@ def main():
     with col2:
         st.title("Sistema Inteligente de Biblioteca")
 
-    # Sidebar: Upload e gerenciamento de arquivos
+    
     with st.sidebar:
         st.header("Gerenciamento de Arquivos")
         
-        # Upload manual
+
         uploader = st.file_uploader("Adicione arquivos PDF", type="pdf", accept_multiple_files=True)
         
-        # Botão para carregar o PDF padrão
+
         if st.button("Carregar base de dados padrão"):
             default_text = load_default_pdf()
             if default_text:
@@ -72,19 +72,19 @@ def main():
         st.header("Preferências do Usuário")
         user_preferences = st.text_input("Digite suas preferências de leitura (ex.: gênero, autor)")
 
-    # Pré-carrega o PDF padrão ao iniciar (se existir)
+ 
     if "document-text" not in st.session_state:
         default_text = load_default_pdf()
         if default_text:
             st.session_state["document-text"] = default_text
 
-    # Processa uploads manuais (sobrescreve o padrão se existir)
+  
     if uploader:
         text = extract_files(uploader)
         st.session_state["document-text"] = text
         st.sidebar.success(f"{len(uploader)} arquivo(s) carregado(s)!")
 
-    # Interação com o assistente
+    
     if "document-text" in st.session_state:
         user_input = st.text_input("Digite sua pergunta:")
         if user_input:

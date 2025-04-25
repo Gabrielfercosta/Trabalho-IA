@@ -2,11 +2,11 @@ import streamlit as st
 import fitz
 from groq import Groq
 
-# Configurar chave da Groq
+
 GROQ_API_KEY = "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"
 client = Groq(api_key=GROQ_API_KEY)
 
-# Função para extrair texto dos PDFs
+
 def extract_text_from_pdfs(uploaded_pdfs):
     text = ""
     for pdf in uploaded_pdfs:
@@ -15,7 +15,7 @@ def extract_text_from_pdfs(uploaded_pdfs):
                 text += page.get_text("text")
     return text
 
-# Motor de inferência para o sistema inteligente
+
 def chat_with_groq(prompt, context):
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
@@ -26,7 +26,7 @@ def chat_with_groq(prompt, context):
     )
     return response.choices[0].message.content
 
-# Interface
+
 def main():
     st.title("Assistente Inteligente de Biblioteca")
     st.image("logo.png", width=200, caption="logo.png")
